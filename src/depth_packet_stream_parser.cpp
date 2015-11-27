@@ -61,15 +61,18 @@ void DepthPacketStreamParser::setPacketProcessor(libfreenect2::BaseDepthPacketPr
 
 void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_length)
 {
+  LOG_INFO << "onDataReceived()";
   Buffer &wb = work_buffer_;
 
   if(in_length == 0)
   {
+    LOG_INFO << "in_length==0";
     //synchronize to subpacket boundary
     wb.length = 0;
   }
   else
   {
+    LOG_INFO << "in_length!=0";
     DepthSubPacketFooter *footer = 0;
     bool footer_found = false;
 
@@ -83,27 +86,32 @@ void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_le
     if(wb.length + in_length > wb.capacity)
     {
       LOG_DEBUG << "subpacket too large";
+      LOG_INFO << "subpacket too large";
       wb.length = 0;
       return;
     }
-
+    LOG_INFO << "memcpy";
     memcpy(wb.data + wb.length, buffer, in_length);
     wb.length += in_length;
 
     if(footer_found)
     {
+      LOG_INFO << "footer_found";
       if(footer->length != wb.length)
       {
         LOG_DEBUG << "image data too short!";
+        LOG_INFO << "image data too short!";
       }
       else
       {
+        LOG_INFO << "image data is long enough";
         if(current_sequence_ != footer->sequence)
         {
           if(current_subsequence_ == 0x3ff)
           {
             if(processor_->ready())
             {
+              LOG_INFO << "processor_->ready()";
               buffer_.swap();
 
               DepthPacket packet;
@@ -128,11 +136,13 @@ void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_le
             else
             {
               LOG_DEBUG << "skipping depth packet";
+              LOG_INFO << "skipping depth packet";
             }
           }
           else
           {
             LOG_DEBUG << "not all subsequences received " << current_subsequence_;
+            LOG_INFO << "not all subsequences received " << current_subsequence_;
           }
 
           current_sequence_ = footer->sequence;
